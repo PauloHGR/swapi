@@ -37,7 +37,7 @@ def apply_filter_person(person, filters):
     return True
 
 def apply_filter_film(film, filters):
-    if filters.get('episode_id') and filters.get('episode_id') != film.get('episode_id'):
+    if filters.get('episode_id') and int(filters.get('episode_id')) != int(film.get('episode_id')):
         return False
     return True
 
@@ -52,8 +52,8 @@ def apply_filters(item, filters, type):
                 return False
     if type == 'people':
         return apply_filter_person(item, filters)
-    #if type == 'films':
-    #    return apply_filter_film(item, filters)
+    if type == 'films':
+        return apply_filter_film(item, filters)
     return True
 
 def apply_sort_option(data, sort_by, sort_dir):
