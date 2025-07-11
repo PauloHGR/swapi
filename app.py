@@ -1,8 +1,15 @@
 from flask import Flask, jsonify, request
 import requests
 import json
+import os
+from flask_jwt_extended import JWTManager, jwt_required, create_access_token
+from dotenv import load_dotenv
+load_dotenv()
 
 app = Flask(__name__)
+
+app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
+jwt = JWTManager(app)
 
 RELATIONAL_FIELDS = {
             'films': 'films',
@@ -116,6 +123,7 @@ def get_relational_data_from_all_entities(entity, filters):
     return entity
 
 @app.route("/<string:type>", methods=["GET"])
+@jwt_required()
 def get_entity(type):
     try:
         data = fetch_all_pages(f"https://swapi.dev/api/{type}/")
@@ -136,6 +144,7 @@ def get_entity(type):
         return jsonify({"status": "error", "message":str(e)})
 
 @app.route("/<string:type>/<int:id>", methods=["GET"])
+@jwt_required()
 def get_entity_by_id(type, id):
     try:
         response = requests.get(f"https://swapi.dev/api/{type}/{id}/", verify=False).json()
@@ -154,6 +163,16 @@ def get_value():
         return jsonify({"status": "success", "data": data})
     except requests.exceptions.RequestException as e:
         return jsonify({"status": "error", "message":str(e)})
+
+@app.route("/login", methods=["POST"])
+def login():
+    username = request.json.get("username", "")
+    password = request.json.get("password", "")
+
+    if username == "admin" and password == "admin":
+        access_token = create_access_token(identity=username)
+        return jsonify(access_token=access_token), 200
+    return jsonify({"msg": "Invalid credentials"}), 401
     
 if __name__ == '__main__':
     app.run(debug=True)
